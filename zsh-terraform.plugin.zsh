@@ -67,7 +67,12 @@ _zsh_terraform_download_install() {
       x86_64)
         machine=amd64
         # if on Darwin, set $OSTYPE to match the release
-        [[ "$OSTYPE" == "darwin"* ]] && local OSTYPE=macos
+        [[ "$OSTYPE" == "darwin"* ]] && local OSTYPE=darwin
+        ;;
+      arm64)
+        machine=arm64
+        # if on Darwin, set $OSTYPE to match the release
+        [[ "$OSTYPE" == "darwin"* ]] && local OSTYPE=darwin
         ;;
       *)
         _zsh_terraform_log $BOLD "red" "Machine $(uname -m) not supported by this plugin"
@@ -77,17 +82,27 @@ _zsh_terraform_download_install() {
    _zsh_terraform_log $NONE "blue" "  -> Download and install ${toolName} ${version}"
    case ${toolName} in
     tfdocs)
+      # https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-darwin-amd64.tar.gz
+      # https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-darwin-arm64.tar.gz
       curl -o "${destDir}/tmp.tar.gz" -fsSL https://github.com/${TF_DOCS_RELEASE}/download/${version}/terraform-docs-${version}-${OSTYPE%-*}-${machine}.tar.gz || (_zsh_terraform_log $BOLD "red" "Error while downloading terraform-docs release" ; return)
       tar xzf ${destDir}/tmp.tar.gz -C ${destDir} 2>&1 > /dev/null
       rm -rf ${destDir}/*.tar.gz
       echo ${version} > ${ZSH_TF_DOCS_VERSION_FILE}
       ;;
     tfsec)
-      curl -o "${destDir}/tfsec" -fsSL https://github.com/${TF_SEC_RELEASE}/download/${version}/tfsec-${OSTYPE%-*}-${machine} || (_zsh_terraform_log $BOLD "red" "Error while downloading terraform-docs release" ; return)
+      # https://github.com/aquasecurity/tfsec/releases/download/v1.28.1/tfsec-checkgen-darwin-arm64
+      # https://github.com/aquasecurity/tfsec/releases/download/v1.28.1/tfsec-checkgen-darwin-amd64
+      # https://github.com/aquasecurity/tfsec/releases/download/v1.28.1/tfsec-checkgen-linux-amd64
+      # https://github.com/aquasecurity/tfsec/releases/download/v1.28.1/tfsec-checkgen-linux-arm64
+      curl -o "${destDir}/tfsec" -fsSL https://github.com/${TF_SEC_RELEASE}/download/${version}/tfsec-checkgen-${OSTYPE%-*}-${machine} || (_zsh_terraform_log $BOLD "red" "Error while downloading terraform-tfsec release" ; return)
       chmod +x "${destDir}/tfsec"
       echo ${version} > ${ZSH_TF_SEC_VERSION_FILE}
       ;;
     tflint)
+      # https://github.com/terraform-linters/tflint/releases/download/v0.42.2/tflint_darwin_amd64.zip
+      # https://github.com/terraform-linters/tflint/releases/download/v0.42.2/tflint_darwin_arm64.zip
+      # https://github.com/terraform-linters/tflint/releases/download/v0.42.2/tflint_linux_amd64.zip
+      # https://github.com/terraform-linters/tflint/releases/download/v0.42.2/tflint_linux_arm64.zip
       curl -o "${destDir}/tmp.zip" -fsSL https://github.com/${TF_LINT_RELEASE}/download/${version}/tflint_${OSTYPE%-*}_${machine}.zip || (_zsh_terraform_log $BOLD "red" "Error while downloading terraform-linters release" ; return)
       unzip -o ${destDir}/tmp.zip -d ${destDir} 2>&1 > /dev/null
       rm -rf ${destDir}/tmp.zip
@@ -236,7 +251,7 @@ _zsh_terraform_load_tool() {
     # Add the plugin bin directory path if it doesn't exist in $PATH.
     if [[ -z ${path[(r)$plugin_dir]} ]]; then
         path+=($plugin_dir)
-    fi      
+    fi
 }
 
 _zsh_terraform_load() {
